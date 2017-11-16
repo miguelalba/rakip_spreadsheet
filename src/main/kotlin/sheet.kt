@@ -299,21 +299,14 @@ fun XSSFSheet.retrieveGeneralInformation(): GeneralInformation {
      */
     fun XSSFSheet.importModelCategory(): ModelCategory {
 
-        val modelClassText = getStringValue(26, Column.H)
-        val modelSubClassText = getStringValue(27, Column.H)
-        val modelClassCommentText = getStringValue(28, Column.H)
-        val basicProcessText = getStringValue(31, Column.H)
-
-        if (modelClassText.isBlank())
+        if (getRow(26).getCell(Column.H.ordinal).cellType == Cell.CELL_TYPE_BLANK)
             throw IllegalArgumentException("Missing model class")
 
-        val modelCategory = ModelCategory()
-        modelCategory.modelClass = modelClassText
-        modelCategory.modelSubClass.addAll(modelSubClassText.split(','))
-        modelCategory.modelClassComment = modelClassCommentText
-        modelCategory.basicProcess.addAll(basicProcessText.split(','))
-
-        return modelCategory
+        return ModelCategory(
+                modelClass = getStringValue(26, Column.H),
+                modelSubClass = getStringListValue(27, Column.H).toMutableList(),
+                modelClassComment = getStringValue(28, Column.H),
+                basicProcess = getStringListValue(31, Column.H).toMutableList())
     }
 
     val gm = GeneralInformation()
