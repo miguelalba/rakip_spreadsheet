@@ -82,7 +82,7 @@ fun main(args: Array<String>) {
     val workbook = ReadSheet().workbook
     val sheet = workbook.getSheetAt(0)
 
-    val gm = retrieveGeneralInformation(sheet)
+    val gm = sheet.retrieveGeneralInformation()
     print(gm)
 
     // Scope
@@ -97,7 +97,26 @@ fun main(args: Array<String>) {
     // spatial information
 }
 
-fun retrieveGeneralInformation(sheet: XSSFSheet): GeneralInformation {
+/**
+ * Import GeneralInformation from Excel sheet.
+ *
+ * - Model name cell in H2. Type [org.apache.poi.ss.usermodel.Cell.CELL_TYPE_STRING].
+ * - Source cell in H3. Type [org.apache.poi.ss.usermodel.Cell.CELL_TYPE_STRING].
+ * - Identifier cell in H4. Type [org.apache.poi.ss.usermodel.Cell.CELL_TYPE_STRING].
+ * - Creators in K4:Q7.
+ * - Rights cell in H8. Type [org.apache.poi.ss.usermodel.Cell.CELL_TYPE_STRING].
+ * - Availability in H9. Type [org.apache.poi.ss.usermodel.Cell.CELL_TYPE_STRING].
+ *   It only takes Yes and No.
+ * - References in K14:U18.
+ * - Language in H24. Type [org.apache.poi.ss.usermodel.Cell.CELL_TYPE_STRING].
+ * - Software in H25. Type [org.apache.poi.ss.usermodel.Cell.CELL_TYPE_STRING].
+ * - Language written in H26. Type [org.apache.poi.ss.usermodel.Cell.CELL_TYPE_STRING].
+ * - Model category in H27, H28, H29 and H32.
+ * - Status in H33. Type [org.apache.poi.ss.usermodel.Cell.CELL_TYPE_STRING].
+ * - Objective in H34. Type [org.apache.poi.ss.usermodel.Cell.CELL_TYPE_STRING].
+ * - Description in H35. Type [org.apache.poi.ss.usermodel.Cell.CELL_TYPE_STRING].
+ */
+fun XSSFSheet.retrieveGeneralInformation(): GeneralInformation {
 
     /**
      * @throws IllegalStateException if the cell contains a string
@@ -301,19 +320,14 @@ fun retrieveGeneralInformation(sheet: XSSFSheet): GeneralInformation {
 
     val gm = GeneralInformation()
 
-    // model name cell in H2. Type Cell#CELL_TYPE_STRING.
-    gm.name = sheet.getStringValue(1, Column.H)
-
-    // source cell in H3. Type Cell#CELL_TYPE_STRING.
-    gm.source = sheet.getStringValue(2, Column.H)
-
-    // identifier cell in H4. Type Cell#CELL_TYPE_STRING
-    gm.identifier = sheet.getStringValue(3, Column.H)
+    gm.name = getStringValue(1, Column.H)
+    gm.source = getStringValue(2, Column.H)
+    gm.identifier = getStringValue(3, Column.H)
 
     // creators
     for (numRow in 3..7) {
         val vCard = try {
-            sheet.importCreator(numRow)
+            importCreator(numRow)
         } catch (exception: Exception) {
             exception.printStackTrace()
             continue
@@ -325,11 +339,9 @@ fun retrieveGeneralInformation(sheet: XSSFSheet): GeneralInformation {
 
     // modification dates
 
-    // rights cell in H8. Type Cell#CELL_TYPE_STRING
-    gm.rights = sheet.getStringValue(7, Column.H)
+    gm.rights = getStringValue(7, Column.H)
 
-    // availability in H9. Type Cell#CELL_TYPE_STRING. It only takes Yes and No.
-    val availabilityString = sheet.getStringValue(8, Column.H)  // "Yes" or "No"
+    val availabilityString = getStringValue(8, Column.H)  // "Yes" or "No"
     gm.isAvailable = when (availabilityString) {
         "Yes" -> true
         "No" -> false
@@ -339,7 +351,7 @@ fun retrieveGeneralInformation(sheet: XSSFSheet): GeneralInformation {
     // references
     for (numRow in 13..17) {
         val record = try {
-            sheet.importReference(numRow)
+            importReference(numRow)
         } catch (exception: Exception) {
             exception.printStackTrace()
             continue
@@ -347,29 +359,19 @@ fun retrieveGeneralInformation(sheet: XSSFSheet): GeneralInformation {
         gm.reference.add(record)
     }
 
-    // language in H24. Type [org.apache.poi.ss.usermodel.Cell.CELL_TYPE_STRING]
-    gm.language = sheet.getStringValue(23, Column.H)
-
-    // Software in H25. Type [org.apache.poi.ss.usermodel.Cell.CELL_TYPE_STRING]
-    gm.software = sheet.getStringValue(24, Column.H)
-
-    // Language written in H26. Type [org.apache.poi.ss.usermodel.Cell.CELL_TYPE_STRING]
-    gm.languageWrittenIn = sheet.getStringValue(25, Column.H)
+    gm.language = getStringValue(23, Column.H)
+    gm.software = getStringValue(24, Column.H)
+    gm.languageWrittenIn = getStringValue(25, Column.H)
 
     try {
-      gm.modelCategory = sheet.importModelCategory()
+      gm.modelCategory = importModelCategory()
     } catch (exception: Exception) {
         exception.printStackTrace()
     }
 
-    // Status in H33. Type [org.apache.poi.ss.usermodel.Cell.CELL_TYPE_STRING]
-    gm.status = sheet.getStringValue(32, Column.H)
-
-    // Objective in H34. Type [org.apache.poi.ss.usermodel.Cell.CELL_TYPE_STRING]
-    gm.objective = sheet.getStringValue(33, Column.H)
-
-    // Description in H35. Type [org.apache.poi.ss.usermodel.Cell.CELL_TYPE_STRING]
-    gm.status = sheet.getStringValue(34, Column.H)
+    gm.status = getStringValue(32, Column.H)
+    gm.objective = getStringValue(33, Column.H)
+    gm.status = getStringValue(34, Column.H)
 
     return gm
 }
