@@ -1,0 +1,43 @@
+buildscript {
+    ext.kotlin_version = '1.1.3'
+
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+plugins {
+    id "com.jfrog.bintray" version "1.7.2"
+}
+
+group 'de.bund.bfr'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'kotlin'
+apply plugin: 'maven-publish'
+
+repositories {
+    maven { url "http://dl.bintray.com/silebat/RAKIP" }
+    mavenCentral()
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+    compile "com.fasterxml.jackson.module:jackson-module-kotlin:2.8.7"
+    compile 'com.googlecode.ez-vcard:ez-vcard:0.10.2'
+    compile 'com.gmail.gcolaianni5:jris:1.0.0'
+
+    // https://mvnrepository.com/artifact/org.apache.servicemix.bundles/org.apache.servicemix.bundles.poi
+    compile group: 'org.apache.servicemix.bundles', name: 'org.apache.servicemix.bundles.poi', version: '3.14_1'
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
