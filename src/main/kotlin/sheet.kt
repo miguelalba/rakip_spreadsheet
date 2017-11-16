@@ -1,13 +1,13 @@
 import com.gmail.gcolaianni5.jris.bean.Record
 import com.gmail.gcolaianni5.jris.bean.Type
-import de.bund.bfr.knime.fsklab.rakip.GeneralInformation
-import de.bund.bfr.knime.fsklab.rakip.ModelCategory
+import de.bund.bfr.knime.fsklab.rakip.*
 import ezvcard.VCard
 import ezvcard.parameter.TelephoneType
 import ezvcard.property.Address
 import ezvcard.property.Email
 import ezvcard.property.Organization
 import ezvcard.property.StructuredName
+import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.xssf.usermodel.XSSFSheet
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 
@@ -82,19 +82,34 @@ fun main(args: Array<String>) {
     val workbook = ReadSheet().workbook
     val sheet = workbook.getSheetAt(0)
 
-    val gm = sheet.retrieveGeneralInformation()
-    print(gm)
+//    val gm = sheet.retrieveGeneralInformation()
+    val scope = sheet.importScope()
+    print(scope)
+}
 
-    // Scope
-    // -----
+/**
+ * @throws IllegalStateException if the cell contains a string
+ * @return 0 for blank cells
+ */
+fun XSSFSheet.getNumericValue(row: Int, col: Column): Double {
+    val cell = getRow(row).getCell(col.ordinal)
+    return cell.numericCellValue
+}
 
-    // hazard
+/**
+ * @return empty string for blank cells
+ */
+fun XSSFSheet.getStringValue(row: Int, col: Column): String {
+    val cell = getRow(row).getCell(col.ordinal)
+    return cell.stringCellValue
+}
 
-    // population group
-
-    // temporal information
-
-    // spatial information
+/**
+ * Get strings from a cell with multiple values separated with commas.
+ */
+fun XSSFSheet.getStringListValue(row: Int, col: Column): List<String> {
+    val cell = getRow(row).getCell(col.ordinal)
+    return cell.stringCellValue.split(',')
 }
 
 /**
@@ -117,23 +132,6 @@ fun main(args: Array<String>) {
  * - Description in H35. Type [org.apache.poi.ss.usermodel.Cell.CELL_TYPE_STRING].
  */
 fun XSSFSheet.retrieveGeneralInformation(): GeneralInformation {
-
-    /**
-     * @throws IllegalStateException if the cell contains a string
-     * @return 0 for blank cells
-     */
-    fun XSSFSheet.getNumericValue(row: Int, col: Column): Double {
-        val cell = getRow(row).getCell(col.ordinal)
-        return cell.numericCellValue
-    }
-
-    /**
-     * @return empty string for blank cells
-     */
-    fun XSSFSheet.getStringValue(row: Int, col: Column): String {
-        val cell = getRow(row).getCell(col.ordinal)
-        return cell.stringCellValue
-    }
 
     /**
      * Import VCard from Excel row.
@@ -374,4 +372,114 @@ fun XSSFSheet.retrieveGeneralInformation(): GeneralInformation {
     gm.status = getStringValue(34, Column.H)
 
     return gm
+}
+
+/**
+ * Import Scope from Excel sheet.
+ */
+fun XSSFSheet.importScope(): Scope {
+
+    /**
+     * Import Hazard.
+     *
+     * - Hazard type in H48 cell. Mandatory.
+     * - Hazard name in H49 cell. Mandatory.
+     * - Hazard description in H50 cell. Optional.
+     * - Hazard  unit in H51 cell. Mandatory.
+     * - Hazard adverse effect in H52 cell. Optional.
+     * - Source of contamination in H53 cell. Optional.
+     * - Benchmark dose in H54 cell. Optional.
+     * - Maximum residue limit in H55 cell. Optional.
+     * - No observed adverse effect level in H56 cell. Optional.
+     * - Lowest observed adverse effect level in H57 cell. Optional.
+     * - Acceptable operator exposure level in H58 cell. Optional.
+     * - Acute reference dose in H59 cell. Optional.
+     * - Acceptable daily intake in H60 cell. Optional.
+     * - Hazard ind/sum in H61 cell. Optional.
+     */
+    fun XSSFSheet.importHazard(): Hazard {
+
+        if (getRow(47).getCell(Column.H.ordinal).cellType == Cell.CELL_TYPE_BLANK)
+            throw IllegalArgumentException("Hazard type is missing")
+
+        if (getRow(48).getCell(Column.H.ordinal).cellType == Cell.CELL_TYPE_BLANK)
+            throw IllegalArgumentException("Hazard name is missing")
+
+        if (getRow(50).getCell(Column.H.ordinal).cellType == Cell.CELL_TYPE_BLANK)
+            throw IllegalArgumentException("Hazard unit is missing")
+
+        val hazard = Hazard()
+        hazard.hazardType = getStringValue(47, Column.H)
+        hazard.hazardName = getStringValue(48, Column.H)
+        hazard.hazardDescription = getStringValue(49, Column.H)
+        hazard.hazardUnit = getStringValue(50, Column.H)
+        hazard.adverseEffect= getStringValue(51, Column.H)
+        // TODO: source of contamination
+        hazard.benchmarkDose = getStringValue(53, Column.H)
+        hazard.maximumResidueLimit = getStringValue(54, Column.H)
+        hazard.noObservedAdverse = getStringValue(55, Column.H)
+        hazard.lowestObservedAdverse = getStringValue(56, Column.H)
+        hazard.acceptableOperator = getStringValue(57, Column.H)
+        hazard.acuteReferenceDose = getStringValue(58, Column.H)
+        hazard.acceptableDailyIntake = getStringValue(59, Column.H)
+        hazard.hazardIndSum = getStringValue(60, Column.H)
+
+        return hazard
+    }
+
+    /**
+     * Import PopulationGroup.
+     *
+     * @throws IllegalArgumentException if population name is missing.
+     *
+     * - Population name in H62 cell. Mandatory.
+     * - Target population in H63 cell. Cardinality +.
+     * - Population span in H64 cell. Cardinality *.
+     * - Population description in H65 cell. Cardinality *.
+     * - Population age in H66 cell. Cardinality *.
+     * - Population gender in H67 cell. Cardinality 1.
+     * - BMI in H68 cell. Cardinality *.
+     * - Special diet groups in H69 cell. Cardinality *.
+     * - Pattern consumption in H70 cell. Cardinality *.
+     * - Region in H71 cell. Cardinality *.
+     * - Country in H72 cell. Cardinality *.
+     * - Risk and population risk factor in H73 cell. Cardinality *.
+     * - Season in H74 cell. Cardinality *.
+     */
+    fun XSSFSheet.importPopulationGroup(): PopulationGroup {
+
+        if (getRow(61).getCell(Column.H.ordinal).cellType == Cell.CELL_TYPE_BLANK)
+            throw IllegalArgumentException("Missing population name")
+
+        val populationName = getStringValue(61, Column.H)
+        val targetPopulation = getStringValue(62, Column.H)
+        val populationSpan = getStringListValue(63, Column.H).toMutableList()
+        val populationDescription = getStringListValue(64, Column.H).toMutableList()
+        val populationAge = getStringListValue(65, Column.H).toMutableList()
+        val populationGender = getStringValue(66, Column.H)
+        val bmi = getStringListValue(67, Column.H).toMutableList()
+        val specialDietGroups = getStringListValue(68, Column.H).toMutableList()
+        val patternConsumption = getStringListValue(69, Column.H).toMutableList()
+        val region = getStringListValue(70, Column.H).toMutableList()
+        val country = getStringListValue(71, Column.H).toMutableList()
+        val riskAndPopulationFactors = getStringListValue(72, Column.H).toMutableList()
+        val seasons = getStringListValue(73, Column.H).toMutableList()
+
+        val group = PopulationGroup(populationName = populationName, targetPopulation = targetPopulation,
+                populationSpan = populationSpan, populationDescription = populationDescription,
+                populationAge = populationAge, populationGender = populationGender,
+                bmi = bmi, specialDietGroups = specialDietGroups, patternConsumption = patternConsumption,
+                region = region, country = country, populationRiskFactor = riskAndPopulationFactors,
+                season = seasons)
+        return group
+    }
+
+    val scope = Scope()
+    scope.hazard = importHazard()
+    scope.populationGroup = importPopulationGroup()
+    // TODO: General comment
+    // TODO: Temporal information
+    // TODO: Spatial information
+
+    return scope
 }
