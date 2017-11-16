@@ -355,7 +355,7 @@ fun XSSFSheet.retrieveGeneralInformation(): GeneralInformation {
     gm.languageWrittenIn = getStringValue(25, Column.H)
 
     try {
-      gm.modelCategory = importModelCategory()
+        gm.modelCategory = importModelCategory()
     } catch (exception: Exception) {
         exception.printStackTrace()
     }
@@ -401,23 +401,21 @@ fun XSSFSheet.importScope(): Scope {
         if (getRow(50).getCell(Column.H.ordinal).cellType == Cell.CELL_TYPE_BLANK)
             throw IllegalArgumentException("Hazard unit is missing")
 
-        val hazard = Hazard()
-        hazard.hazardType = getStringValue(47, Column.H)
-        hazard.hazardName = getStringValue(48, Column.H)
-        hazard.hazardDescription = getStringValue(49, Column.H)
-        hazard.hazardUnit = getStringValue(50, Column.H)
-        hazard.adverseEffect= getStringValue(51, Column.H)
-        // TODO: source of contamination
-        hazard.benchmarkDose = getStringValue(53, Column.H)
-        hazard.maximumResidueLimit = getStringValue(54, Column.H)
-        hazard.noObservedAdverse = getStringValue(55, Column.H)
-        hazard.lowestObservedAdverse = getStringValue(56, Column.H)
-        hazard.acceptableOperator = getStringValue(57, Column.H)
-        hazard.acuteReferenceDose = getStringValue(58, Column.H)
-        hazard.acceptableDailyIntake = getStringValue(59, Column.H)
-        hazard.hazardIndSum = getStringValue(60, Column.H)
-
-        return hazard
+        return Hazard(
+                hazardType = getStringValue(47, Column.H),
+                hazardName = getStringValue(48, Column.H),
+                hazardDescription = getStringValue(49, Column.H),
+                hazardUnit = getStringValue(50, Column.H),
+                adverseEffect = getStringValue(51, Column.H),
+                // TODO: source of contamination
+                benchmarkDose = getStringValue(53, Column.H),
+                maximumResidueLimit = getStringValue(54, Column.H),
+                noObservedAdverse = getStringValue(55, Column.H),
+                lowestObservedAdverse = getStringValue(56, Column.H),
+                acceptableOperator = getStringValue(57, Column.H),
+                acuteReferenceDose = getStringValue(58, Column.H),
+                acceptableDailyIntake = getStringValue(59, Column.H),
+                hazardIndSum = getStringValue(60, Column.H))
     }
 
     /**
