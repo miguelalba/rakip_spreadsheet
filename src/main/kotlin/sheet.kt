@@ -131,17 +131,17 @@ fun retrieveGeneralInformation(sheet: XSSFSheet): GeneralInformation {
      *
      * @throws IllegalStateException if mail cell is blank
      */
-    fun importCreator(sheet: XSSFSheet, row: Int): VCard {
+    fun XSSFSheet.importCreator(row: Int): VCard {
 
         val vCard = VCard()
 
-        val nameText = sheet.getStringValue(row, Column.K)
-        val organizationText = sheet.getStringValue(row, Column.L)
-        val telephoneText = sheet.getStringValue(row, Column.M)
-        val mailText = sheet.getStringValue(row, Column.N)
-        val countryText = sheet.getStringValue(row, Column.O)
-        val cityText = sheet.getStringValue(row, Column.P)
-        val postalCodeInt = sheet.getNumericValue(row, Column.Q).toInt()
+        val nameText = getStringValue(row, Column.K)
+        val organizationText = getStringValue(row, Column.L)
+        val telephoneText = getStringValue(row, Column.M)
+        val mailText = getStringValue(row, Column.N)
+        val countryText = getStringValue(row, Column.O)
+        val cityText = getStringValue(row, Column.P)
+        val postalCodeInt = getNumericValue(row, Column.Q).toInt()
 
         // throw exception if mail is missing.
         if (mailText.isBlank())
@@ -223,19 +223,19 @@ fun retrieveGeneralInformation(sheet: XSSFSheet): GeneralInformation {
      * - Publication website. Type [org.apache.poi.ss.usermodel.Cell.CELL_TYPE_STRING].
      *   Optional. Invalid urls are discarded.
      */
-    fun importReference(sheet: XSSFSheet, row: Int): Record {
+    fun XSSFSheet.importReference(row: Int): Record {
 
-        val isReferenceDescriptionText = sheet.getStringValue(row, Column.K)
-        val typeText = sheet.getStringValue(row, Column.L)
-        val dateText = sheet.getNumericValue(row, Column.M)
-        val pmidText = sheet.getNumericValue(row, Column.N)
-        val doiText = sheet.getStringValue(row, Column.O)
-        val authorListText = sheet.getStringValue(row, Column.P)
-        val titleText = sheet.getStringValue(row, Column.Q)
-        val abstractText = sheet.getStringValue(row, Column.R)
-        val journalVolIssueText = sheet.getStringValue(row, Column.S)
-        val statusText = sheet.getStringValue(row, Column.T)
-        val websiteText = sheet.getStringValue(row, Column.U)
+        val isReferenceDescriptionText = getStringValue(row, Column.K)
+        val typeText = getStringValue(row, Column.L)
+        val dateText = getNumericValue(row, Column.M)
+        val pmidText = getNumericValue(row, Column.N)
+        val doiText = getStringValue(row, Column.O)
+        val authorListText = getStringValue(row, Column.P)
+        val titleText = getStringValue(row, Column.Q)
+        val abstractText = getStringValue(row, Column.R)
+        val journalVolIssueText = getStringValue(row, Column.S)
+        val statusText = getStringValue(row, Column.T)
+        val websiteText = getStringValue(row, Column.U)
 
         // throw exception if mail is isReferenceDescription or doi are missing
         if (isReferenceDescriptionText.isBlank())
@@ -313,7 +313,7 @@ fun retrieveGeneralInformation(sheet: XSSFSheet): GeneralInformation {
     // creators
     for (numRow in 3..7) {
         val vCard = try {
-            importCreator(sheet, numRow)
+            sheet.importCreator(numRow)
         } catch (exception: Exception) {
             exception.printStackTrace()
             continue
@@ -339,7 +339,7 @@ fun retrieveGeneralInformation(sheet: XSSFSheet): GeneralInformation {
     // references
     for (numRow in 13..17) {
         val record = try {
-            importReference(sheet, numRow)
+            sheet.importReference(numRow)
         } catch (exception: Exception) {
             exception.printStackTrace()
             continue
