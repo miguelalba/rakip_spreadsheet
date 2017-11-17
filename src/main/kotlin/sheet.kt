@@ -20,6 +20,56 @@ class ReadSheet {
 
 enum class Column { A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z }
 
+enum class Row(val num: Int) {
+
+    GENERALINFORMATION_NAME(1),
+    GENERALINFORMATION_SOURCE(2),
+    GENERALINFORMATION_IDENTIFIER(3),
+    GENERALINFORMATION_RIGHTS(7),
+    GENERALINFORMATION_AVAILABILITY(8),
+    GENERALINFORMATION_LANGUAGE(23),
+    GENERALINFORMATION_SOFTWARE(24),
+    GENERALINFORMATION_LANGUAGEWRITTENIN(25),
+    GENERALINFORMATION_STATUS(33),
+    GENERALINFORMATION_OBJECTIVE(34),
+    GENERALINFORMATION_DESCRIPTION(35),
+
+    MODELCATEGORY_MODELCLASS(26),
+    MODELCATEGORY_MODELSUBCLASS(27),
+    MODELCATEGORY_MODELCLASSCOMMENT(28),
+    MODELCATEGORY_BASICPROCESS(31),
+
+    HAZARD_TYPE(47),
+    HAZARD_NAME(48),
+    HAZARD_DESCRIPTION(49),
+    HAZARD_UNIT(50),
+    HAZARD_ADVERSEEFFECT(51),
+    HAZARD_BENCHMARKDOSE(53),
+    HAZARD_MAXIMUMRESIDUELIMIT(54),
+    HAZARD_NOOBSERVEDADVERSE(55),
+    HAZARD_LOWESTOBSERVEDADVERSE(56),
+    HAZARD_ACCEPTABLEOPERATOR(57),
+    HAZARD_ACUTEREFERENCEDOSE(58),
+    HAZARD_ACCEPTABLEDAILYINTAKE(59),
+    HAZARD_INDSUM(60),
+
+    POPULATIONGROUP_NAME(61),
+    POPULATIONGROUP_TARGET(62),
+    POPULATIONGROUP_SPAN(63),
+    POPULATIONGROUP_DESCRIPTION(64),
+    POPULATIONGROUP_AGE(65),
+    POPULATIONGROUP_GENDER(66),
+    POPULATIONGROUP_BMI(67),
+    POPULATIONGROUP_SPECIALDIETGROUPS(68),
+    POPULATIONGROUP_PATTERNCONSUMPTION(69),
+    POPULATIONGROUP_REGION(70),
+    POPULATIONGROUP_COUNTRY(71),
+    POPULATIONGROUP_RISKFACTOR(72),
+    POPULATIONGROUP_SEASON(73),
+
+    SCOPE_COMMENT(74)
+}
+
 val RIS_TYPES = mapOf<String, Type>(
         "Abstract" to Type.ABST,
         "Audiovisual material" to Type.ADVS,
@@ -97,6 +147,12 @@ fun XSSFSheet.getNumericValue(row: Int, col: Column): Double {
 }
 
 /**
+ * @throws IllegalStateException if the cell contains a string
+ * @return 0 for blank cells
+ */
+fun XSSFSheet.getNumericValue(row: Row, col: Column): Double = getNumericValue(row.num, col)
+
+/**
  * @return empty string for blank cells
  */
 fun XSSFSheet.getStringValue(row: Int, col: Column): String {
@@ -105,12 +161,22 @@ fun XSSFSheet.getStringValue(row: Int, col: Column): String {
 }
 
 /**
+ * @return empty string for blank cells
+ */
+fun XSSFSheet.getStringValue(row: Row, col: Column): String = getStringValue(row.num, col)
+
+/**
  * Get strings from a cell with multiple values separated with commas.
  */
 fun XSSFSheet.getStringListValue(row: Int, col: Column): List<String> {
     val cell = getRow(row).getCell(col.ordinal)
     return cell.stringCellValue.split(',')
 }
+
+/**
+ * Get strings from a cell with multiple values separated with commas.
+ */
+fun XSSFSheet.getStringListValue(row: Row, col: Column): List<String> = getStringListValue(row.num, col)
 
 /**
  * Import GeneralInformation from Excel sheet.
@@ -299,21 +365,21 @@ fun XSSFSheet.retrieveGeneralInformation(): GeneralInformation {
      */
     fun XSSFSheet.importModelCategory(): ModelCategory {
 
-        if (getRow(26).getCell(Column.H.ordinal).cellType == Cell.CELL_TYPE_BLANK)
+        if (getRow(Row.MODELCATEGORY_MODELCLASS.num).getCell(Column.H.ordinal).cellType == Cell.CELL_TYPE_BLANK)
             throw IllegalArgumentException("Missing model class")
 
         return ModelCategory(
-                modelClass = getStringValue(26, Column.H),
-                modelSubClass = getStringListValue(27, Column.H).toMutableList(),
-                modelClassComment = getStringValue(28, Column.H),
-                basicProcess = getStringListValue(31, Column.H).toMutableList())
+                modelClass = getStringValue(Row.MODELCATEGORY_MODELCLASS, Column.H),
+                modelSubClass = getStringListValue(Row.MODELCATEGORY_MODELCLASS, Column.H).toMutableList(),
+                modelClassComment = getStringValue(Row.MODELCATEGORY_MODELCLASSCOMMENT, Column.H),
+                basicProcess = getStringListValue(Row.MODELCATEGORY_BASICPROCESS, Column.H).toMutableList())
     }
 
     val gm = GeneralInformation()
 
-    gm.name = getStringValue(1, Column.H)
-    gm.source = getStringValue(2, Column.H)
-    gm.identifier = getStringValue(3, Column.H)
+    gm.name = getStringValue(Row.GENERALINFORMATION_NAME, Column.H)
+    gm.source = getStringValue(Row.GENERALINFORMATION_SOURCE, Column.H)
+    gm.identifier = getStringValue(Row.GENERALINFORMATION_IDENTIFIER, Column.H)
 
     // creators
     for (numRow in 3..7) {
@@ -330,9 +396,9 @@ fun XSSFSheet.retrieveGeneralInformation(): GeneralInformation {
 
     // modification dates
 
-    gm.rights = getStringValue(7, Column.H)
+    gm.rights = getStringValue(Row.GENERALINFORMATION_RIGHTS, Column.H)
 
-    val availabilityString = getStringValue(8, Column.H)  // "Yes" or "No"
+    val availabilityString = getStringValue(Row.GENERALINFORMATION_AVAILABILITY, Column.H)  // "Yes" or "No"
     gm.isAvailable = when (availabilityString) {
         "Yes" -> true
         "No" -> false
@@ -350,9 +416,9 @@ fun XSSFSheet.retrieveGeneralInformation(): GeneralInformation {
         gm.reference.add(record)
     }
 
-    gm.language = getStringValue(23, Column.H)
-    gm.software = getStringValue(24, Column.H)
-    gm.languageWrittenIn = getStringValue(25, Column.H)
+    gm.language = getStringValue(Row.GENERALINFORMATION_LANGUAGE, Column.H)
+    gm.software = getStringValue(Row.GENERALINFORMATION_SOFTWARE, Column.H)
+    gm.languageWrittenIn = getStringValue(Row.GENERALINFORMATION_LANGUAGEWRITTENIN, Column.H)
 
     try {
         gm.modelCategory = importModelCategory()
@@ -360,9 +426,9 @@ fun XSSFSheet.retrieveGeneralInformation(): GeneralInformation {
         exception.printStackTrace()
     }
 
-    gm.status = getStringValue(32, Column.H)
-    gm.objective = getStringValue(33, Column.H)
-    gm.status = getStringValue(34, Column.H)
+    gm.status = getStringValue(Row.GENERALINFORMATION_STATUS, Column.H)
+    gm.objective = getStringValue(Row.GENERALINFORMATION_OBJECTIVE, Column.H)
+    gm.description = getStringValue(Row.GENERALINFORMATION_DESCRIPTION, Column.H)
 
     return gm
 }
@@ -392,30 +458,30 @@ fun XSSFSheet.importScope(): Scope {
      */
     fun XSSFSheet.importHazard(): Hazard {
 
-        if (getRow(47).getCell(Column.H.ordinal).cellType == Cell.CELL_TYPE_BLANK)
+        if (getRow(Row.HAZARD_TYPE.num).getCell(Column.H.ordinal).cellType == Cell.CELL_TYPE_BLANK)
             throw IllegalArgumentException("Hazard type is missing")
 
-        if (getRow(48).getCell(Column.H.ordinal).cellType == Cell.CELL_TYPE_BLANK)
+        if (getRow(Row.HAZARD_NAME.num).getCell(Column.H.ordinal).cellType == Cell.CELL_TYPE_BLANK)
             throw IllegalArgumentException("Hazard name is missing")
 
-        if (getRow(50).getCell(Column.H.ordinal).cellType == Cell.CELL_TYPE_BLANK)
+        if (getRow(Row.HAZARD_UNIT.num).getCell(Column.H.ordinal).cellType == Cell.CELL_TYPE_BLANK)
             throw IllegalArgumentException("Hazard unit is missing")
 
         return Hazard(
-                hazardType = getStringValue(47, Column.H),
-                hazardName = getStringValue(48, Column.H),
-                hazardDescription = getStringValue(49, Column.H),
-                hazardUnit = getStringValue(50, Column.H),
-                adverseEffect = getStringValue(51, Column.H),
+                hazardType = getStringValue(Row.HAZARD_TYPE, Column.H),
+                hazardName = getStringValue(Row.HAZARD_NAME, Column.H),
+                hazardDescription = getStringValue(Row.HAZARD_DESCRIPTION, Column.H),
+                hazardUnit = getStringValue(Row.HAZARD_UNIT, Column.H),
+                adverseEffect = getStringValue(Row.HAZARD_ADVERSEEFFECT, Column.H),
                 // TODO: source of contamination
-                benchmarkDose = getStringValue(53, Column.H),
-                maximumResidueLimit = getStringValue(54, Column.H),
-                noObservedAdverse = getStringValue(55, Column.H),
-                lowestObservedAdverse = getStringValue(56, Column.H),
-                acceptableOperator = getStringValue(57, Column.H),
-                acuteReferenceDose = getStringValue(58, Column.H),
-                acceptableDailyIntake = getStringValue(59, Column.H),
-                hazardIndSum = getStringValue(60, Column.H))
+                benchmarkDose = getStringValue(Row.HAZARD_BENCHMARKDOSE, Column.H),
+                maximumResidueLimit = getStringValue(Row.HAZARD_MAXIMUMRESIDUELIMIT, Column.H),
+                noObservedAdverse = getStringValue(Row.HAZARD_NOOBSERVEDADVERSE, Column.H),
+                lowestObservedAdverse = getStringValue(Row.HAZARD_LOWESTOBSERVEDADVERSE, Column.H),
+                acceptableOperator = getStringValue(Row.HAZARD_ACCEPTABLEOPERATOR, Column.H),
+                acuteReferenceDose = getStringValue(Row.HAZARD_ACUTEREFERENCEDOSE, Column.H),
+                acceptableDailyIntake = getStringValue(Row.HAZARD_ACCEPTABLEDAILYINTAKE, Column.H),
+                hazardIndSum = getStringValue(Row.HAZARD_INDSUM, Column.H))
     }
 
     /**
@@ -439,29 +505,30 @@ fun XSSFSheet.importScope(): Scope {
      */
     fun XSSFSheet.importPopulationGroup(): PopulationGroup {
 
-        if (getRow(61).getCell(Column.H.ordinal).cellType == Cell.CELL_TYPE_BLANK)
+        if (getRow(Row.POPULATIONGROUP_NAME.num).getCell(Column.H.ordinal).cellType == Cell.CELL_TYPE_BLANK)
             throw IllegalArgumentException("Missing population name")
 
         return PopulationGroup(
-                populationName = getStringValue(61, Column.H),
-                targetPopulation = getStringValue(62, Column.H),
-                populationSpan = getStringListValue(63, Column.H).toMutableList(),
-                populationDescription = getStringListValue(64, Column.H).toMutableList(),
-                populationAge = getStringListValue(65, Column.H).toMutableList(),
-                populationGender = getStringValue(66, Column.H),
-                bmi = getStringListValue(67, Column.H).toMutableList(),
-                specialDietGroups = getStringListValue(68, Column.H).toMutableList(),
-                patternConsumption = getStringListValue(69, Column.H).toMutableList(),
-                region = getStringListValue(70, Column.H).toMutableList(),
-                country = getStringListValue(71, Column.H).toMutableList(),
-                populationRiskFactor = getStringListValue(72, Column.H).toMutableList(),
-                season = getStringListValue(73, Column.H).toMutableList())
+                populationName = getStringValue(Row.POPULATIONGROUP_NAME, Column.H),
+                targetPopulation = getStringValue(Row.POPULATIONGROUP_TARGET, Column.H),
+                populationSpan = getStringListValue(Row.POPULATIONGROUP_SPAN, Column.H).toMutableList(),
+                populationDescription = getStringListValue(Row.POPULATIONGROUP_DESCRIPTION, Column.H).toMutableList(),
+                populationAge = getStringListValue(Row.POPULATIONGROUP_AGE, Column.H).toMutableList(),
+                populationGender = getStringValue(Row.POPULATIONGROUP_GENDER, Column.H),
+                bmi = getStringListValue(Row.POPULATIONGROUP_BMI, Column.H).toMutableList(),
+                specialDietGroups = getStringListValue(Row.POPULATIONGROUP_SPECIALDIETGROUPS, Column.H).toMutableList(),
+                patternConsumption = getStringListValue(Row.POPULATIONGROUP_SPECIALDIETGROUPS, Column.H).toMutableList(),
+                region = getStringListValue(Row.POPULATIONGROUP_REGION, Column.H).toMutableList(),
+                country = getStringListValue(Row.POPULATIONGROUP_COUNTRY, Column.H).toMutableList(),
+                populationRiskFactor = getStringListValue(Row.POPULATIONGROUP_RISKFACTOR, Column.H).toMutableList(),
+                season = getStringListValue(Row.POPULATIONGROUP_SEASON, Column.H).toMutableList())
     }
 
     val scope = Scope()
     scope.hazard = importHazard()
     scope.populationGroup = importPopulationGroup()
-    // TODO: General comment
+    scope.generalComment = getStringValue(Row.SCOPE_COMMENT, Column.H)
+
     // TODO: Temporal information
     // TODO: Spatial information
 
