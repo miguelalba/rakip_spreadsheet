@@ -442,27 +442,20 @@ fun XSSFSheet.importScope(): Scope {
         if (getRow(61).getCell(Column.H.ordinal).cellType == Cell.CELL_TYPE_BLANK)
             throw IllegalArgumentException("Missing population name")
 
-        val populationName = getStringValue(61, Column.H)
-        val targetPopulation = getStringValue(62, Column.H)
-        val populationSpan = getStringListValue(63, Column.H).toMutableList()
-        val populationDescription = getStringListValue(64, Column.H).toMutableList()
-        val populationAge = getStringListValue(65, Column.H).toMutableList()
-        val populationGender = getStringValue(66, Column.H)
-        val bmi = getStringListValue(67, Column.H).toMutableList()
-        val specialDietGroups = getStringListValue(68, Column.H).toMutableList()
-        val patternConsumption = getStringListValue(69, Column.H).toMutableList()
-        val region = getStringListValue(70, Column.H).toMutableList()
-        val country = getStringListValue(71, Column.H).toMutableList()
-        val riskAndPopulationFactors = getStringListValue(72, Column.H).toMutableList()
-        val seasons = getStringListValue(73, Column.H).toMutableList()
-
-        val group = PopulationGroup(populationName = populationName, targetPopulation = targetPopulation,
-                populationSpan = populationSpan, populationDescription = populationDescription,
-                populationAge = populationAge, populationGender = populationGender,
-                bmi = bmi, specialDietGroups = specialDietGroups, patternConsumption = patternConsumption,
-                region = region, country = country, populationRiskFactor = riskAndPopulationFactors,
-                season = seasons)
-        return group
+        return PopulationGroup(
+                populationName = getStringValue(61, Column.H),
+                targetPopulation = getStringValue(62, Column.H),
+                populationSpan = getStringListValue(63, Column.H).toMutableList(),
+                populationDescription = getStringListValue(64, Column.H).toMutableList(),
+                populationAge = getStringListValue(65, Column.H).toMutableList(),
+                populationGender = getStringValue(66, Column.H),
+                bmi = getStringListValue(67, Column.H).toMutableList(),
+                specialDietGroups = getStringListValue(68, Column.H).toMutableList(),
+                patternConsumption = getStringListValue(69, Column.H).toMutableList(),
+                region = getStringListValue(70, Column.H).toMutableList(),
+                country = getStringListValue(71, Column.H).toMutableList(),
+                populationRiskFactor = getStringListValue(72, Column.H).toMutableList(),
+                season = getStringListValue(73, Column.H).toMutableList())
     }
 
     val scope = Scope()
